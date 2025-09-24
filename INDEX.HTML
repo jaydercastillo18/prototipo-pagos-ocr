@@ -1,0 +1,1786 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Gestor de Pagos - Sistema Profesional</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --primary: #4361ee; --secondary: #3f37c9; --success: #4cc9f0; 
+      --danger: #f72585; --warning: #f8961e; --info: #4895ef; 
+      --dark: #212529; --light: #f8f9fa; --muted: #6c757d;
+      --bg: #f8f9fa; --card: #ffffff; --border: #dee2e6; --shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      --shadow-lg: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    *{box-sizing:border-box; margin:0; padding:0;}
+    body{font-family:'Segoe UI', system-ui, sans-serif; background:var(--bg); color:var(--dark); line-height:1.6;}
+    header{background:linear-gradient(135deg, var(--primary), var(--secondary)); color:white; padding:1rem 1.25rem; box-shadow:var(--shadow-lg); position:sticky; top:0; z-index:100;}
+    header h1{font-size:1.5rem; font-weight:600; display:flex; align-items:center; gap:0.625rem;}
+    main{max-width:1400px; margin:1.25rem auto; padding:0 0.9375rem;}
+    .center{display:flex;justify-content:center;align-items:center}
+    
+    /* Login */
+    #loginScreen{height:85vh;display:flex;align-items:center;justify-content:center}
+    .loginBox{background:var(--card);padding:2rem;border-radius:0.75rem;box-shadow:var(--shadow-lg);width:100%;max-width:420px;border-top:4px solid var(--primary);}
+    .loginBox h2{margin-bottom:1.25rem;color:var(--dark);text-align:center;font-size:1.5rem;}
+    .input-group{margin-bottom:1rem;}
+    .input-group label{display:block;margin-bottom:0.5rem;font-size:0.875rem;color:var(--muted);font-weight:500;}
+    .input-group input{width:100%;padding:0.75rem;border:1px solid var(--border);border-radius:0.375rem;font-size:0.9375rem;transition:all 0.2s;}
+    .input-group input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 0.2rem rgba(67, 97, 238, 0.25);}
+    .btn{display:inline-flex;align-items:center;gap:0.375rem;background:var(--primary);color:white;padding:0.625rem 1rem;border-radius:0.375rem;border:none;cursor:pointer;font-weight:500;transition:all 0.2s;font-size:0.875rem;}
+    .btn:hover{background:var(--secondary);transform:translateY(-1px);box-shadow:var(--shadow);}
+    .btn:active{transform:translateY(0);}
+    .btn:disabled{background:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+    .btn.secondary{background:var(--muted);}
+    .btn.secondary:hover{background:#5a6268;}
+    .btn.success{background:var(--success);}
+    .btn.success:hover{background:#3aa8d0;}
+    .btn.danger{background:var(--danger);}
+    .btn.danger:hover{background:#e11571;}
+    .btn.warning{background:var(--warning);}
+    .btn.warning:hover{background:#e0861b;}
+    .btn.info{background:var(--info);}
+    .btn.info:hover{background:#3a7ed8;}
+    .btn-group{display:flex;gap:0.625rem;}
+    .small{font-size:0.8125rem;color:var(--muted);}
+    .text-center{text-align:center;}
+    
+    /* App */
+    #appScreen{display:none;}
+    .topbar{display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;}
+    .leftControls{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;}
+    .card{background:var(--card);padding:1.25rem;border-radius:0.625rem;box-shadow:var(--shadow);margin-bottom:1rem;border:1px solid var(--border);}
+    .card h2, .card h3{margin-bottom:1rem;color:var(--dark);display:flex;align-items:center;gap:0.5rem;font-weight:600;}
+    .card h2{font-size:1.25rem;}
+    .card h3{font-size:1.1rem;}
+    #preview{max-width:100%;border-radius:0.375rem;border:1px solid var(--border);display:block;margin-top:0.625rem;max-height:200px;}
+    .ocrBox{background:var(--card);padding:1rem;border-radius:0.625rem;margin-bottom:1rem;}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:1.25rem;margin-top:1.25rem;}
+    .membersList{background:var(--card);padding:1rem;border-radius:0.625rem;max-height:70vh;overflow:auto;}
+    .searchBox{margin-bottom:1rem;position:relative;}
+    .searchBox input{width:100%;padding:0.625rem 2.5rem 0.625rem 0.75rem;border:1px solid var(--border);border-radius:0.375rem;font-size:0.875rem;}
+    .searchBox i{position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:var(--muted);}
+    .memberCard{border:1px solid var(--border);padding:1rem;border-radius:0.5rem;margin-bottom:0.75rem;background:#fff;transition:all 0.2s;position:relative;}
+    .memberCard:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+    .memberCard h3{margin:0 0 0.625rem 0;font-size:1rem;display:flex;justify-content:space-between;align-items:center;}
+    .quota{display:flex;gap:0.625rem;align-items:center;margin:0.3125rem 0;padding:0.5rem;border-radius:0.3125rem;transition:background 0.2s;flex-wrap:wrap;}
+    .quota:hover{background:#f8f9fa;}
+    .quota .qnum{width:80px;font-weight:600;color:var(--dark);font-size:0.875rem;}
+    .paid{color:var(--success);font-weight:600;display:flex;align-items:center;gap:0.3125rem;}
+    .unpaid{color:var(--danger);font-weight:600;display:flex;align-items:center;gap:0.3125rem;}
+    .pendingBox{background:#fff3cd;border-radius:0.5rem;padding:1rem;margin-top:1rem;border:1px solid #ffeaa7;}
+    .pendingList{list-style:none;padding-left:0;margin:0;}
+    .pendingList li{padding:0.625rem;border-bottom:1px dashed #f0e0c6;display:flex;justify-content:space-between;align-items:center;}
+    .statsBox{display:grid;grid-template-columns:repeat(2,1fr);gap:0.625rem;margin-top:1rem;}
+    .statItem{background:#f8f9fa;padding:0.75rem;border-radius:0.375rem;text-align:center;border:1px solid var(--border);}
+    .statItem .number{font-size:1.25rem;font-weight:bold;color:var(--primary);}
+    .statItem .label{font-size:0.75rem;color:var(--muted);font-weight:500;}
+    .modal{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:1rem;}
+    .modal .inner{background:white;padding:1.5rem;border-radius:0.75rem;min-width:400px;max-width:90vw;max-height:90vh;overflow:auto;box-shadow:var(--shadow-lg);}
+    footer{margin-top:1.25rem;text-align:center;color:var(--muted);font-size:0.8125rem;padding:1rem;border-top:1px solid var(--border);}
+    .actions{display:flex;gap:0.5rem;flex-wrap:wrap;}
+    .notification{position:fixed;top:1.25rem;right:1.25rem;padding:1rem;border-radius:0.375rem;color:white;z-index:1100;display:flex;align-items:center;gap:0.625rem;box-shadow:var(--shadow-lg);transform:translateX(150%);transition:transform 0.3s;max-width:400px;}
+    .notification.show{transform:translateX(0);}
+    .notification.success{background:var(--success);}
+    .notification.error{background:var(--danger);}
+    .notification.info{background:var(--info);}
+    .notification.warning{background:var(--warning);}
+    .tabs{display:flex;gap:0.3125rem;margin-bottom:1rem;border-bottom:1px solid var(--border);}
+    .tab{background:#e9ecef;padding:0.5rem 1rem;border-radius:0.375rem 0.375rem 0 0;cursor:pointer;font-size:0.875rem;transition:all 0.2s;}
+    .tab.active{background:var(--primary);color:white;}
+    .tab:hover:not(.active){background:#dee2e6;}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+    
+    /* Filtros */
+    .filters{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .filter-btn{background:var(--light);border:1px solid var(--border);padding:0.375rem 0.75rem;border-radius:0.375rem;cursor:pointer;font-size:0.8125rem;transition:all 0.2s;}
+    .filter-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+    .filter-btn:hover:not(.active){background:#e9ecef;}
+    
+    /* Progress bar */
+    .progress{height:0.5rem;background:#e9ecef;border-radius:0.25rem;overflow:hidden;margin:0.5rem 0;}
+    .progress-bar{height:100%;background:var(--primary);transition:width 0.3s;}
+    
+    /* Calendar view */
+    .calendar{display:grid;grid-template-columns:repeat(7, 1fr);gap:0.5rem;margin-top:1rem;}
+    .calendar-day{background:#f8f9fa;border:1px solid var(--border);border-radius:0.375rem;padding:0.5rem;min-height:80px;font-size:0.75rem;}
+    .calendar-day.header{background:var(--primary);color:white;text-align:center;font-weight:600;}
+    .calendar-day.today{background:#e7f1ff;border-color:var(--primary);}
+    .payment-indicator{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-right:0.25rem;}
+    
+    /* Dashboard cards */
+    .dashboard-cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1.5rem;}
+    .dashboard-card{background:var(--card);padding:1.25rem;border-radius:0.625rem;box-shadow:var(--shadow);text-align:center;border-left:4px solid var(--primary);}
+    .dashboard-card h3{font-size:0.875rem;color:var(--muted);margin-bottom:0.5rem;}
+    .dashboard-card .value{font-size:1.5rem;font-weight:bold;color:var(--dark);}
+    .dashboard-card .subvalue{font-size:0.75rem;color:var(--muted);}
+    
+    /* Responsive */
+    @media(max-width:1200px){
+      .grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:768px){
+      .topbar{flex-direction:column;align-items:stretch;}
+      .leftControls{justify-content:center;}
+      .statsBox{grid-template-columns:1fr;}
+      .dashboard-cards{grid-template-columns:1fr 1fr;}
+      .filters{flex-direction:column;}
+      .calendar{grid-template-columns:repeat(3, 1fr);}
+    }
+    @media(max-width:576px){
+      .dashboard-cards{grid-template-columns:1fr;}
+      .calendar{grid-template-columns:repeat(2, 1fr);}
+      .modal .inner{min-width:auto;width:100%;}
+    }
+    
+    /* Animaciones */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in{animation: fadeIn 0.3s ease-in-out;}
+    
+    /* Scroll personalizado */
+    ::-webkit-scrollbar{width:8px;}
+    ::-webkit-scrollbar-track{background:#f1f1f1;border-radius:10px;}
+    ::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:10px;}
+    ::-webkit-scrollbar-thumb:hover{background:#a8a8a8;}
+  </style>
+</head>
+<body>
+  <header>
+    <h1><i class="fas fa-money-check-alt"></i> Gestor de Pagos - Sistema Profesional</h1>
+  </header>
+
+  <main>
+    <!-- LOGIN -->
+    <section id="loginScreen">
+      <div class="loginBox fade-in">
+        <h2><i class="fas fa-lock"></i> Acceso Administrativo</h2>
+        <div class="input-group">
+          <label for="userIn">Usuario</label>
+          <input id="userIn" placeholder="Ingresa tu usuario" autocomplete="username" />
+        </div>
+        <div class="input-group">
+          <label for="passIn">Contraseña</label>
+          <input id="passIn" placeholder="Ingresa tu contraseña" type="password" autocomplete="current-password" />
+        </div>
+        <div class="btn-group" style="margin-top:1.25rem">
+          <button id="loginBtn" class="btn"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+          <button id="demoBtn" class="btn secondary"><i class="fas fa-eye"></i> Demo (solo lectura)</button>
+        </div>
+        <p id="loginError" class="small" style="color:#b71c1c; margin-top:0.625rem;"></p>
+        <p class="small text-center" style="margin-top:0.9375rem;">Usuario y contraseña están en el código fuente (cámbialos por seguridad).</p>
+      </div>
+    </section>
+
+    <!-- APP -->
+    <section id="appScreen">
+      <!-- Dashboard -->
+      <div class="dashboard-cards">
+        <div class="dashboard-card">
+          <h3><i class="fas fa-users"></i> Total Integrantes</h3>
+          <div class="value" id="dashboardTotalMembers">0</div>
+          <div class="subvalue" id="dashboardActiveMembers">0 activos</div>
+        </div>
+        <div class="dashboard-card">
+          <h3><i class="fas fa-check-circle"></i> Pagos Completados</h3>
+          <div class="value" id="dashboardCompleted">0%</div>
+          <div class="subvalue" id="dashboardPaidQuotas">0/0 cuotas</div>
+        </div>
+        <div class="dashboard-card">
+          <h3><i class="fas fa-money-bill-wave"></i> Total Recaudado</h3>
+          <div class="value" id="dashboardCollected">S/ 0.00</div>
+          <div class="subvalue" id="dashboardPending">S/ 0.00 pendiente</div>
+        </div>
+        <div class="dashboard-card">
+          <h3><i class="fas fa-clock"></i> Pendientes</h3>
+          <div class="value" id="dashboardPendingCount">0</div>
+          <div class="subvalue">Pagos por asignar</div>
+        </div>
+      </div>
+
+      <div class="topbar">
+        <div class="leftControls">
+          <div class="card">
+            <h3><i class="fas fa-upload"></i> Subir comprobante</h3>
+            <input id="fileInput" type="file" accept="image/*, .pdf" />
+            <div class="progress" style="display:none;" id="uploadProgress">
+              <div class="progress-bar" id="uploadProgressBar" style="width:0%"></div>
+            </div>
+            <img id="preview" src="" alt="Vista previa" />
+            <div id="ocrStatus" class="small" style="margin-top:0.625rem">Estado: esperando imagen...</div>
+            <div style="margin-top:0.625rem" class="actions">
+              <button id="exportBtn" class="btn info"><i class="fas fa-file-export"></i> Exportar CSV</button>
+              <button id="backupBtn" class="btn secondary"><i class="fas fa-save"></i> Respaldar datos</button>
+              <button id="clearBtn" class="btn danger"><i class="fas fa-trash"></i> Limpiar pagos</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:right">
+          <div class="small"><i class="fas fa-user"></i> Usuario: <span id="who"></span></div>
+          <div style="margin-top:0.625rem" class="btn-group">
+            <button id="viewToggle" class="btn secondary"><i class="fas fa-list"></i> Vista lista</button>
+            <button id="settingsBtn" class="btn secondary"><i class="fas fa-cog"></i> Configuración</button>
+            <button id="logoutBtn" class="btn secondary"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Lista de integrantes -->
+        <div>
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h2><i class="fas fa-users"></i> Lista de Integrantes</h2>
+              <div class="small" id="filterInfo">Mostrando todos los integrantes</div>
+            </div>
+            
+            <div class="filters">
+              <div class="filter-btn active" data-filter="all">Todos</div>
+              <div class="filter-btn" data-filter="paid">Pagados</div>
+              <div class="filter-btn" data-filter="pending">Pendientes</div>
+              <div class="filter-btn" data-filter="partial">Parciales</div>
+            </div>
+            
+            <div class="searchBox">
+              <input id="searchInput" placeholder="Buscar integrante..." />
+              <i class="fas fa-search"></i>
+            </div>
+            <div class="membersList" id="membersList">
+              <!-- tarjetas generadas por JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Lateral: OCR, sugerencias, pendientes -->
+        <div>
+          <div class="card">
+            <h3><i class="fas fa-search"></i> Resultado OCR</h3>
+            <div id="ocrText" class="small" style="white-space:pre-wrap;max-height:180px;overflow:auto;background:#f9f9f9;padding:0.625rem;border-radius:0.375rem;font-family:monospace;"></div>
+            <div style="margin-top:1rem">
+              <div><strong><i class="fas fa-user"></i> Nombre detectado:</strong> <span id="detectedName">-</span></div>
+              <div><strong><i class="fas fa-money-bill-wave"></i> Monto detectado:</strong> <span id="detectedAmount">-</span></div>
+              <div><strong><i class="fas fa-calendar"></i> Fecha detectada:</strong> <span id="detectedDate">-</span></div>
+            </div>
+            <div style="margin-top:1rem" class="actions">
+              <button id="autoAssignBtn" class="btn success"><i class="fas fa-robot"></i> Asignar automáticamente</button>
+              <button id="manualAssignBtn" class="btn info"><i class="fas fa-hand-pointer"></i> Asignar manual</button>
+            </div>
+          </div>
+
+          <div class="pendingBox">
+            <h3><i class="fas fa-clock"></i> Pagos pendientes de asignación</h3>
+            <ul id="pendingList" class="pendingList"></ul>
+          </div>
+          
+          <div class="card">
+            <h3><i class="fas fa-calendar-alt"></i> Calendario de Pagos</h3>
+            <div id="calendarView" class="calendar">
+              <!-- Generado por JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- modal para resolver ambigüedad / asignar -->
+      <div id="modal" class="modal">
+        <div class="inner">
+          <h3><i class="fas fa-tasks"></i> Asignar pago</h3>
+          <div id="modalBody"></div>
+          <div style="margin-top:1rem;display:flex;gap:0.625rem;justify-content:flex-end">
+            <button id="modalCancel" class="btn secondary">Cancelar</button>
+            <button id="modalSave" class="btn success">Guardar</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- modal de configuración -->
+      <div id="settingsModal" class="modal">
+        <div class="inner">
+          <h3><i class="fas fa-cog"></i> Configuración</h3>
+          <div class="tabs">
+            <div class="tab active" data-tab="members">Integrantes</div>
+            <div class="tab" data-tab="system">Sistema</div>
+            <div class="tab" data-tab="security">Seguridad</div>
+          </div>
+          <div id="settingsContent">
+            <!-- Contenido cargado dinámicamente -->
+          </div>
+          <div style="margin-top:1rem;display:flex;gap:0.625rem;justify-content:flex-end">
+            <button id="settingsCancel" class="btn secondary">Cerrar</button>
+            <button id="settingsSave" class="btn success">Guardar cambios</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>Sistema profesional de gestión de pagos - <span id="lastSave">Última actualización: Nunca</span></p>
+      </footer>
+    </section>
+  </main>
+
+  <!-- Notificaciones -->
+  <div id="notification" class="notification">
+    <i class="fas fa-info-circle"></i>
+    <span id="notificationText">Mensaje de notificación</span>
+  </div>
+
+<script>
+/* =========================
+   CONFIGURACIÓN (cámbialo)
+   ========================= */
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "miclave123"; // CAMBIA ESTA CONTRASEÑA
+const LOCALSTORAGE_KEY = "gestor_pagos_v3";
+const BACKUP_PREFIX = "backup_pagos_";
+
+// Función simple de "encriptación" para datos sensibles (básica, no para producción)
+function simpleEncrypt(text) {
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+function simpleDecrypt(encrypted) {
+  try {
+    return decodeURIComponent(escape(atob(encrypted)));
+  } catch (e) {
+    return null;
+  }
+}
+
+/* =========================
+   LISTA DE INTEGRANTES + CUOTAS (edítala si quieres)
+   Las cuotas están en orden: cuotas[0]..cuotas[7]
+   ========================= */
+const integrantesBase = [
+  { nombre: "FRANCISCO ARMIJO", cuotas: [367,367,367,367,367,367,367,371.29], activo: true },
+  { nombre: "IRIS CARHUAPOMA", cuotas: [338,338,338,338,338,338,338,342.23], activo: true },
+  { nombre: "KEYWIN CASTILLO", cuotas: [294,294,294,294,294,294,294,302.7], activo: true },
+  { nombre: "JUANA CASTRO", cuotas: [207,207,207,207,207,207,207,215.78], activo: true },
+  { nombre: "BRIGITH COTRINA", cuotas: [265,265,265,265,265,265,265,276.23], activo: true },
+  { nombre: "ESTEFANY NONATO", cuotas: [367,367,367,367,367,367,367,371.29], activo: true },
+  { nombre: "CLARA ROJAS", cuotas: [222,222,222,222,222,222,222,226.17], activo: true },
+  { nombre: "LUIS ROJAS", cuotas: [222,222,222,222,222,222,222,226.17], activo: true },
+  { nombre: "DEIMI ROSALES", cuotas: [222,222,222,222,222,222,222,226.17], activo: true },
+  { nombre: "EDMI ROSALES", cuotas: [149,149,149,149,149,149,149,157.95], activo: true },
+  { nombre: "ADRIAMS MIRANDA", cuotas: [149,149,149,149,149,149,149,157.95], activo: true },
+  { nombre: "CELEDONIA ESPINOZA", cuotas: [193,193,193,193,193,193,193,197.34], activo: true }
+];
+
+/* =========================
+   Estado en memoria (persistido)
+   - structure: { integrantes: [...], pagos: [[bool...], ...], pendientes: [...] }
+   ========================= */
+let state = loadState() || createInitialState();
+let currentUser = null;
+let currentView = 'list'; // 'list' o 'calendar'
+let currentFilter = 'all';
+
+/* =========================
+   UTILIDADES MEJORADAS
+   ========================= */
+function createInitialState(){
+  return {
+    integrantes: JSON.parse(JSON.stringify(integrantesBase)),
+    pagos: integrantesBase.map(p => Array(8).fill(false)),
+    pendientes: [], // cada pendiente: {id, amount, text, date, detectedDate}
+    lastUpdate: new Date().toISOString(),
+    historial: [] // Para guardar cambios importantes
+  };
+}
+
+function saveState(){
+  state.lastUpdate = new Date().toISOString();
+  
+  // Guardar con "encriptación" básica
+  const encryptedState = simpleEncrypt(JSON.stringify(state));
+  localStorage.setItem(LOCALSTORAGE_KEY, encryptedState);
+  updateLastSaveDisplay();
+}
+
+function loadState(){
+  try{
+    const encrypted = localStorage.getItem(LOCALSTORAGE_KEY);
+    if (!encrypted) return null;
+    
+    const decrypted = simpleDecrypt(encrypted);
+    return decrypted ? JSON.parse(decrypted) : null;
+  }catch(e){
+    console.error("Error al cargar datos:", e);
+    showNotification("Error al cargar datos guardados", "error");
+    return null;
+  }
+}
+
+function updateLastSaveDisplay(){
+  const lastSaveEl = document.getElementById('lastSave');
+  if(state.lastUpdate){
+    const date = new Date(state.lastUpdate);
+    lastSaveEl.textContent = `Última actualización: ${date.toLocaleString()}`;
+  } else {
+    lastSaveEl.textContent = "Última actualización: Nunca";
+  }
+}
+
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(["\uFEFF" + csv], {type: 'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); 
+  a.href = url; 
+  a.download = filename; 
+  a.click(); 
+  URL.revokeObjectURL(url);
+  showNotification("Archivo CSV exportado correctamente", "success");
+}
+
+function showNotification(message, type = "info", duration = 4000) {
+  const notification = document.getElementById('notification');
+  const notificationText = document.getElementById('notificationText');
+  
+  // Cambiar ícono según tipo
+  let icon = 'fa-info-circle';
+  if (type === 'success') icon = 'fa-check-circle';
+  if (type === 'error') icon = 'fa-exclamation-circle';
+  if (type === 'warning') icon = 'fa-exclamation-triangle';
+  
+  notification.innerHTML = `<i class="fas ${icon}"></i><span id="notificationText">${message}</span>`;
+  notification.className = `notification ${type}`;
+  notification.classList.add('show');
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, duration);
+}
+
+function createBackup() {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const backupKey = `${BACKUP_PREFIX}${timestamp}`;
+  
+  // Crear copia del estado para el backup
+  const backupData = JSON.parse(JSON.stringify(state));
+  const encryptedBackup = simpleEncrypt(JSON.stringify(backupData));
+  
+  localStorage.setItem(backupKey, encryptedBackup);
+  showNotification("Respaldo creado correctamente", "success");
+}
+
+function restoreFromBackup() {
+  // Buscar todas las claves de respaldo
+  const backupKeys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(BACKUP_PREFIX)) {
+      backupKeys.push(key);
+    }
+  }
+  
+  if (backupKeys.length === 0) {
+    showNotification("No se encontraron respaldos", "error");
+    return;
+  }
+  
+  // Ordenar por fecha (más reciente primero)
+  backupKeys.sort().reverse();
+  
+  // Mostrar opción para restaurar el más reciente
+  if (confirm(`¿Restaurar desde el respaldo más reciente (${backupKeys[0].replace(BACKUP_PREFIX, '')})?`)) {
+    try {
+      const encryptedBackup = localStorage.getItem(backupKeys[0]);
+      const backupData = JSON.parse(simpleDecrypt(encryptedBackup));
+      state = backupData;
+      saveState();
+      renderAll();
+      showNotification("Datos restaurados desde respaldo", "success");
+    } catch (e) {
+      showNotification("Error al restaurar el respaldo", "error");
+    }
+  }
+}
+
+/* =========================
+   RENDERIZADO MEJORADO
+   ========================= */
+const membersListEl = document.getElementById('membersList');
+const pendingListEl = document.getElementById('pendingList');
+let searchFilter = "";
+
+function renderAll(){
+  renderDashboard();
+  renderMembers();
+  renderPendings();
+  renderCalendar();
+  saveState();
+}
+
+function renderDashboard() {
+  // Calcular estadísticas para el dashboard
+  let totalPaid = 0;
+  let totalPending = 0;
+  let totalQuotas = 0;
+  let paidQuotas = 0;
+  let activeMembers = 0;
+  
+  state.integrantes.forEach((p, i) => {
+    if (p.activo) activeMembers++;
+    
+    p.cuotas.forEach((c, j) => {
+      totalQuotas++;
+      if (state.pagos[i][j]) {
+        paidQuotas++;
+        totalPaid += state.pagos[i][j].amount || c;
+      } else {
+        totalPending += c;
+      }
+    });
+  });
+  
+  const completionRate = totalQuotas > 0 ? Math.round((paidQuotas / totalQuotas) * 100) : 0;
+  
+  // Actualizar dashboard
+  document.getElementById('dashboardTotalMembers').textContent = state.integrantes.length;
+  document.getElementById('dashboardActiveMembers').textContent = `${activeMembers} activos`;
+  document.getElementById('dashboardCompleted').textContent = `${completionRate}%`;
+  document.getElementById('dashboardPaidQuotas').textContent = `${paidQuotas}/${totalQuotas} cuotas`;
+  document.getElementById('dashboardCollected').textContent = `S/ ${totalPaid.toFixed(2)}`;
+  document.getElementById('dashboardPending').textContent = `S/ ${totalPending.toFixed(2)} pendiente`;
+  document.getElementById('dashboardPendingCount').textContent = state.pendientes.length;
+}
+
+function renderMembers(){
+  membersListEl.innerHTML = '';
+  
+  // Aplicar filtros
+  let filteredMembers = state.integrantes.filter(p => 
+    p.nombre.toLowerCase().includes(searchFilter.toLowerCase())
+  );
+  
+  // Aplicar filtro de estado de pago
+  if (currentFilter !== 'all') {
+    filteredMembers = filteredMembers.filter((p, i) => {
+      const paidCount = state.pagos[i].filter(p => p).length;
+      const totalCount = p.cuotas.length;
+      
+      switch(currentFilter) {
+        case 'paid': return paidCount === totalCount;
+        case 'pending': return paidCount === 0;
+        case 'partial': return paidCount > 0 && paidCount < totalCount;
+        default: return true;
+      }
+    });
+  }
+  
+  // Actualizar información del filtro
+  document.getElementById('filterInfo').textContent = 
+    `Mostrando ${filteredMembers.length} de ${state.integrantes.length} integrantes`;
+  
+  if (filteredMembers.length === 0) {
+    membersListEl.innerHTML = '<div style="text-align:center;padding:1.25rem;color:var(--muted)">No se encontraron integrantes</div>';
+    return;
+  }
+  
+  filteredMembers.forEach((p, i) => {
+    const originalIndex = state.integrantes.findIndex(m => m.nombre === p.nombre);
+    const card = document.createElement('div'); 
+    card.className = 'memberCard fade-in';
+    if (!p.activo) card.style.opacity = '0.6';
+    
+    // Calcular estadísticas del integrante
+    const totalQuotas = p.cuotas.length;
+    const paidQuotas = state.pagos[originalIndex].filter(p => p).length;
+    const completion = Math.round((paidQuotas / totalQuotas) * 100);
+    
+    const h = document.createElement('h3'); 
+    h.innerHTML = `
+      <span>${p.nombre} ${!p.activo ? '<small style="color:var(--muted)">(Inactivo)</small>' : ''}</span>
+      <span style="font-size:0.875rem;color:${completion === 100 ? 'var(--success)' : completion > 50 ? 'var(--warning)' : 'var(--danger)'}">
+        ${completion}%
+      </span>`;
+    card.appendChild(h);
+
+    // Barra de progreso
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress';
+    const progressInner = document.createElement('div');
+    progressInner.className = 'progress-bar';
+    progressInner.style.width = `${completion}%`;
+    progressBar.appendChild(progressInner);
+    card.appendChild(progressBar);
+
+    p.cuotas.forEach((c, j) => {
+      const q = document.createElement('div'); 
+      q.className = 'quota';
+      
+      const qn = document.createElement('div'); 
+      qn.className = 'qnum'; 
+      qn.textContent = `Cuota ${j+1}:`;
+      
+      const qv = document.createElement('div');
+      
+      if(state.pagos[originalIndex][j]){
+        const payment = state.pagos[originalIndex][j];
+        qv.className = 'paid'; 
+        qv.innerHTML = `<i class="fas fa-check-circle"></i> ${c} (${payment.date || ''})`;
+        
+        // Botón para ver detalles del pago
+        const detailBtn = document.createElement('button'); 
+        detailBtn.className='btn secondary'; 
+        detailBtn.style.marginLeft='0.625rem'; 
+        detailBtn.style.padding = '0.25rem 0.5rem';
+        detailBtn.innerHTML = '<i class="fas fa-info"></i>';
+        detailBtn.title = 'Ver detalles del pago';
+        detailBtn.onclick = () => {
+          showPaymentDetails(p.nombre, j+1, payment);
+        };
+        
+        q.appendChild(qn); 
+        q.appendChild(qv); 
+        q.appendChild(detailBtn);
+      } else {
+        qv.className = 'unpaid'; 
+        qv.innerHTML = `<i class="fas fa-times-circle"></i> ${c}`;
+        
+        // botón rápido para marcar manualmente
+        const btn = document.createElement('button'); 
+        btn.className='btn secondary'; 
+        btn.style.marginLeft='0.625rem'; 
+        btn.style.padding = '0.25rem 0.5rem';
+        btn.innerHTML = '<i class="fas fa-edit"></i>';
+        btn.title = 'Marcar pago manualmente';
+        btn.onclick = () => {
+          if (!currentUser.isAdmin) {
+            showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+            return;
+          }
+          
+          const amount = prompt('Monto pagado (ej: 120.00)', c) || '';
+          const parsed = parseAmount(amount);
+          if(isNaN(parsed)){ 
+            showNotification("Monto inválido", "error");
+            return; 
+          }
+          
+          const date = prompt('Fecha del pago (dejar vacío para fecha actual)', '') || new Date().toLocaleString();
+          state.pagos[originalIndex][j] = {amount: parsed, date: date};
+          
+          // Agregar al historial
+          state.historial.unshift({
+            action: 'Pago manual',
+            details: `${p.nombre} - Cuota ${j+1}`,
+            amount: parsed,
+            date: new Date().toLocaleString(),
+            user: currentUser.name
+          });
+          
+          // Limitar historial a 50 entradas
+          if (state.historial.length > 50) state.historial.pop();
+          
+          renderAll();
+          showNotification(`Pago registrado para ${p.nombre} - Cuota ${j+1}`, "success");
+        };
+        
+        q.appendChild(qn); 
+        q.appendChild(qv); 
+        q.appendChild(btn);
+      }
+      
+      card.appendChild(q);
+    });
+
+    // Botones de acción
+    const actionButtons = document.createElement('div');
+    actionButtons.className = 'actions';
+    actionButtons.style.marginTop = '0.625rem';
+    
+    const toggleActiveBtn = document.createElement('button');
+    toggleActiveBtn.className = p.activo ? 'btn warning' : 'btn success';
+    toggleActiveBtn.innerHTML = p.activo ? '<i class="fas fa-eye-slash"></i> Desactivar' : '<i class="fas fa-eye"></i> Activar';
+    toggleActiveBtn.onclick = () => {
+      if (!currentUser.isAdmin) {
+        showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+        return;
+      }
+      
+      p.activo = !p.activo;
+      renderAll();
+      showNotification(`${p.nombre} ${p.activo ? 'activado' : 'desactivado'}`, "info");
+    };
+    
+    actionButtons.appendChild(toggleActiveBtn);
+    card.appendChild(actionButtons);
+
+    membersListEl.appendChild(card);
+  });
+}
+
+function showPaymentDetails(name, quota, payment) {
+  const modal = document.getElementById('modal');
+  const modalBody = document.getElementById('modalBody');
+  
+  modalBody.innerHTML = `
+    <div style="padding:1rem; background:#f8f9fa; border-radius:0.375rem;">
+      <h4>Detalles del pago</h4>
+      <p><strong>Integrante:</strong> ${name}</p>
+      <p><strong>Cuota:</strong> ${quota}</p>
+      <p><strong>Monto:</strong> S/ ${payment.amount || 'N/A'}</p>
+      <p><strong>Fecha:</strong> ${payment.date || 'No registrada'}</p>
+      ${payment.note ? `<p><strong>Nota:</strong> ${payment.note.substring(0, 100)}</p>` : ''}
+    </div>
+  `;
+  
+  document.getElementById('modalSave').style.display = 'none';
+  document.getElementById('modalCancel').textContent = 'Cerrar';
+  
+  modal.style.display = 'flex';
+  
+  document.getElementById('modalCancel').onclick = () => {
+    modal.style.display = 'none';
+    document.getElementById('modalSave').style.display = 'inline-flex';
+    document.getElementById('modalCancel').textContent = 'Cancelar';
+  };
+}
+
+function renderPendings(){
+  pendingListEl.innerHTML = '';
+  
+  if (state.pendientes.length === 0) {
+    pendingListEl.innerHTML = '<li style="justify-content:center;color:var(--muted)">No hay pagos pendientes de asignación</li>';
+    return;
+  }
+  
+  state.pendientes.forEach((p, idx) => {
+    const li = document.createElement('li');
+    const left = document.createElement('div'); 
+    left.innerHTML = `
+      <strong>${p.amount ? `S/ ${p.amount.toFixed(2)}` : 'Monto no detectado'}</strong>
+      <div class="small">${p.date}</div>
+      ${p.detectedDate ? `<div class="small">Fecha detectada: ${p.detectedDate}</div>` : ''}
+      <div class="small">${p.text ? p.text.substring(0,100) + (p.text.length > 100 ? '...' : '') : ''}</div>`;
+    
+    const right = document.createElement('div');
+    right.style.display = 'flex';
+    right.style.gap = '0.3125rem';
+    
+    const asgBtn = document.createElement('button'); 
+    asgBtn.className='btn success'; 
+    asgBtn.innerHTML = '<i class="fas fa-tasks"></i>';
+    asgBtn.title = 'Asignar pago';
+    asgBtn.onclick = () => openAssignModal({pendingIndex: idx});
+    
+    const delBtn = document.createElement('button'); 
+    delBtn.className='btn danger'; 
+    delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    delBtn.title = 'Eliminar pendiente';
+    delBtn.onclick = () => { 
+      if(confirm('¿Eliminar este pago pendiente?')) { 
+        state.pendientes.splice(idx,1); 
+        renderAll(); 
+        showNotification("Pendiente eliminado", "info");
+      } 
+    };
+    
+    right.appendChild(asgBtn); 
+    right.appendChild(delBtn);
+    li.appendChild(left); 
+    li.appendChild(right);
+    li.style.display='flex'; 
+    li.style.justifyContent='space-between'; 
+    li.style.alignItems='center';
+    pendingListEl.appendChild(li);
+  });
+}
+
+function renderCalendar() {
+  const calendarEl = document.getElementById('calendarView');
+  calendarEl.innerHTML = '';
+  
+  // Encabezados de días
+  const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  days.forEach(day => {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'calendar-day header';
+    dayEl.textContent = day;
+    calendarEl.appendChild(dayEl);
+  });
+  
+  // Generar días del mes actual
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  // Días vacíos al inicio
+  for (let i = 0; i < firstDay.getDay(); i++) {
+    const emptyEl = document.createElement('div');
+    emptyEl.className = 'calendar-day';
+    calendarEl.appendChild(emptyEl);
+  }
+  
+  // Días del mes
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'calendar-day';
+    
+    // Marcar si es hoy
+    if (i === today.getDate() && today.getMonth() === new Date().getMonth()) {
+      dayEl.classList.add('today');
+    }
+    
+    dayEl.innerHTML = `<div>${i}</div>`;
+    
+    // Verificar si hay pagos en este día
+    const dayPayments = [];
+    state.integrantes.forEach((member, memberIdx) => {
+      member.cuotas.forEach((quota, quotaIdx) => {
+        const payment = state.pagos[memberIdx][quotaIdx];
+        if (payment && payment.date) {
+          const paymentDate = new Date(payment.date);
+          if (paymentDate.getDate() === i && 
+              paymentDate.getMonth() === today.getMonth() &&
+              paymentDate.getFullYear() === today.getFullYear()) {
+            dayPayments.push({
+              member: member.nombre,
+              quota: quotaIdx + 1,
+              amount: payment.amount || quota
+            });
+          }
+        }
+      });
+    });
+    
+    // Mostrar indicadores de pago
+    if (dayPayments.length > 0) {
+      dayEl.innerHTML += `<div style="margin-top:0.25rem;"><span class="payment-indicator"></span> ${dayPayments.length} pago(s)</div>`;
+    }
+    
+    calendarEl.appendChild(dayEl);
+  }
+}
+
+/* =========================
+   LOGIN MEJORADO
+   ========================= */
+const loginScreen = document.getElementById('loginScreen');
+const appScreen = document.getElementById('appScreen');
+document.getElementById('loginBtn').addEventListener('click', () => {
+  const u = document.getElementById('userIn').value.trim();
+  const p = document.getElementById('passIn').value;
+  
+  if(u === ADMIN_USER && p === ADMIN_PASS){
+    loginSuccess(u, true);
+  } else {
+    document.getElementById('loginError').textContent = 'Usuario o contraseña incorrecta';
+    showNotification("Credenciales incorrectas", "error");
+  }
+});
+
+document.getElementById('demoBtn').addEventListener('click', () => {
+  loginSuccess('demo', false);
+});
+
+function loginSuccess(user, isAdmin){
+  currentUser = {name: user, isAdmin: isAdmin};
+  loginScreen.style.display='none';
+  appScreen.style.display='block';
+  document.getElementById('who').textContent = user + (isAdmin ? ' (Admin)' : ' (Solo lectura)');
+  
+  // Deshabilitar funcionalidades si es modo demo
+  if (!isAdmin) {
+    document.querySelectorAll('button:not(#logoutBtn):not(#settingsBtn):not(#viewToggle)').forEach(btn => {
+      btn.disabled = true;
+      btn.title = "Modo solo lectura - Inicia sesión como administrador para editar";
+    });
+  }
+  
+  renderAll();
+  showNotification(`Bienvenido, ${user}`, "success");
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  if(confirm('¿Cerrar sesión?')){ 
+    location.reload(); 
+  }
+});
+
+/* =========================
+   OCR y lógica de asignación MEJORADA
+   ========================= */
+const fileInput = document.getElementById('fileInput');
+const previewEl = document.getElementById('preview');
+const ocrStatus = document.getElementById('ocrStatus');
+const ocrTextEl = document.getElementById('ocrText');
+const detectedNameEl = document.getElementById('detectedName');
+const detectedAmountEl = document.getElementById('detectedAmount');
+const detectedDateEl = document.getElementById('detectedDate');
+
+let lastOCR = { text:'', name:'', amount:null, date:null };
+
+// escucha de imagen
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  
+  // Validar tipo de archivo
+  if (!file.type.startsWith('image/')) {
+    showNotification("Por favor, selecciona un archivo de imagen válido", "error");
+    return;
+  }
+  
+  // Mostrar progreso de carga
+  const progressBar = document.getElementById('uploadProgress');
+  const progressInner = document.getElementById('uploadProgressBar');
+  progressBar.style.display = 'block';
+  progressInner.style.width = '0%';
+  
+  previewEl.src = URL.createObjectURL(file);
+  ocrStatus.textContent = 'Iniciando OCR...';
+  
+  // Simular progreso de carga
+  let progress = 0;
+  const progressInterval = setInterval(() => {
+    progress += 5;
+    progressInner.style.width = `${progress}%`;
+    if (progress >= 90) clearInterval(progressInterval);
+  }, 200);
+  
+  try {
+    // usar worker de Tesseract
+    const worker = Tesseract.createWorker({
+      logger: m => {
+        if(m.status && m.progress != null){
+          progressInner.style.width = `${m.progress * 100}%`;
+          ocrStatus.textContent = `OCR: ${m.status} ${(m.progress*100).toFixed(0)}%`;
+        } else {
+          ocrStatus.textContent = `OCR: ${m.status || 'procesando...'}`;
+        }
+      }
+    });
+    
+    await worker.load();
+    await worker.loadLanguage('spa');
+    await worker.initialize('spa');
+    const { data: { text } } = await worker.recognize(file);
+    await worker.terminate();
+
+    clearInterval(progressInterval);
+    progressInner.style.width = '100%';
+    
+    lastOCR.text = text || '';
+    // detectar nombre, monto y fecha
+    const guessedName = guessNameFromText(text);
+    const guessedAmount = guessAmountFromText(text);
+    const guessedDate = guessDateFromText(text);
+
+    lastOCR.name = guessedName || '';
+    lastOCR.amount = guessedAmount || null;
+    lastOCR.date = guessedDate || null;
+
+    ocrTextEl.textContent = text;
+    detectedNameEl.textContent = lastOCR.name || '-';
+    detectedAmountEl.textContent = lastOCR.amount !== null ? `S/ ${lastOCR.amount.toFixed(2)}` : '-';
+    detectedDateEl.textContent = lastOCR.date || '-';
+    ocrStatus.textContent = 'OCR completado';
+    
+    setTimeout(() => {
+      progressBar.style.display = 'none';
+    }, 1000);
+    
+    showNotification("Procesamiento OCR finalizado", "success");
+
+  } catch(err){
+    console.error(err);
+    clearInterval(progressInterval);
+    progressBar.style.display = 'none';
+    ocrStatus.textContent = 'Error OCR: ' + (err.message || err);
+    showNotification("Error durante el procesamiento OCR", "error");
+  }
+});
+
+// botones
+document.getElementById('autoAssignBtn').addEventListener('click', () => {
+  if (!currentUser.isAdmin) {
+    showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+    return;
+  }
+  autoAssign(lastOCR);
+});
+
+document.getElementById('manualAssignBtn').addEventListener('click', () => {
+  if (!currentUser.isAdmin) {
+    showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+    return;
+  }
+  openAssignModal({});
+});
+
+/* =========================
+   FUNCIONES PARA DETECCIÓN MEJORADAS
+   ========================= */
+function guessAmountFromText(text){
+  if(!text) return null;
+  
+  // Buscar montos: diferentes patrones comunes en comprobantes
+  const patterns = [
+    /(?:S\/|S|USD|\\$)?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})?)/gi, // Formato estándar
+    /total.*?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})?)/gi, // Después de "total"
+    /monto.*?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})?)/gi, // Después de "monto"
+    /importe.*?([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]{1,2})?)/gi // Después de "importe"
+  ];
+  
+  let matches = [];
+  
+  patterns.forEach(pattern => {
+    let m;
+    while((m = pattern.exec(text)) !== null){
+      const raw = m[1] || m[0];
+      const num = parseAmount(raw);
+      if(!isNaN(num) && num > 0) matches.push(num);
+    }
+  });
+  
+  if(matches.length === 0) return null;
+  
+  // Filtrar valores atípicos (demasiado pequeños o grandes)
+  const validMatches = matches.filter(m => m > 10 && m < 10000);
+  if (validMatches.length === 0) return null;
+  
+  // Escoger el monto más común (evita valores extremos)
+  const frequency = {};
+  validMatches.forEach(m => {
+    // Redondear para agrupar montos similares
+    const rounded = Math.round(m);
+    frequency[rounded] = (frequency[rounded] || 0) + 1;
+  });
+  
+  let mostFrequent = null;
+  let maxCount = 0;
+  for (const [amount, count] of Object.entries(frequency)) {
+    if (count > maxCount) {
+      maxCount = count;
+      mostFrequent = parseFloat(amount);
+    }
+  }
+  
+  return mostFrequent;
+}
+
+function parseAmount(raw){
+  if(raw==null) return NaN;
+  let s = String(raw).replace(/[^0-9.,]/g,'');
+  
+  // Si no tiene separadores decimales, asumir que es entero
+  if (!s.includes('.') && !s.includes(',')) {
+    return parseFloat(s);
+  }
+  
+  // Lógica para decidir decimal
+  const lastComma = s.lastIndexOf(',');
+  const lastDot = s.lastIndexOf('.');
+  
+  if(lastComma > -1 && lastDot > -1){
+    if(lastComma > lastDot) { 
+      // Comma es decimal, dot es separador de miles
+      s = s.replace(/\./g,'').replace(',', '.'); 
+    } else { 
+      // Dot es decimal, comma es separador de miles
+      s = s.replace(/,/g,''); 
+    }
+  } else if(lastComma > -1 && lastDot === -1){
+    // Solo comma - verificar si es decimal o separador de miles
+    if (s.split(',').length === 2 && s.split(',')[1].length <= 2) {
+      // Probablemente comma como decimal
+      s = s.replace(',', '.');
+    } else {
+      // Probablemente comma como separador de miles
+      s = s.replace(/,/g, '');
+    }
+  } else if(lastDot > -1 && lastComma === -1){
+    // Solo dot - verificar si es decimal o separador de miles
+    if (s.split('.').length === 2 && s.split('.')[1].length <= 2) {
+      // Probablemente dot como decimal - mantener
+    } else {
+      // Probablemente dot como separador de miles
+      s = s.replace(/\./g, '');
+    }
+  }
+  
+  const num = parseFloat(s);
+  return isNaN(num) ? NaN : num;
+}
+
+function guessNameFromText(text){
+  if(!text) return '';
+  const T = text.toUpperCase();
+  
+  // Patrones comunes para encontrar nombres en comprobantes
+  const patterns = [
+    /NOMBRE[:-\s]{0,}\s*([A-ZÁÉÍÓÚÑ\s]{3,})/i,
+    /PAGO A\s+([A-ZÁÉÍÓÚÑ\s]{3,})/i,
+    /DE:\s*([A-ZÁÉÍÓÚÑ\s]{3,})/i,
+    /CLIENTE:\s*([A-ZÁÉÍÓÚÑ\s]{3,})/i,
+    /RECIBIDO DE:\s*([A-ZÁÉÍÓÚÑ\s]{3,})/i
+  ];
+  
+  for (const pattern of patterns) {
+    const m = T.match(pattern);
+    if (m && m[1]) {
+      const name = m[1].trim();
+      // Verificar si el nombre coincide con algún integrante
+      for (let person of state.integrantes) {
+        if (name.includes(person.nombre.toUpperCase()) || 
+            person.nombre.toUpperCase().includes(name)) {
+          return person.nombre;
+        }
+      }
+      return name; // Devolver el nombre encontrado aunque no coincida exactamente
+    }
+  }
+  
+  // Búsqueda por coincidencia aproximada con nombres de la lista
+  for (let person of state.integrantes) {
+    const name = person.nombre.toUpperCase();
+    const tokens = name.split(/\s+/).filter(Boolean);
+    let matches = 0;
+    
+    tokens.forEach(t => { 
+      if (t.length > 2 && T.includes(t)) matches++; 
+    });
+    
+    if (tokens.length && (matches / tokens.length) >= 0.6) {
+      return person.nombre;
+    }
+  }
+  
+  // Fallback: palabras en mayúsculas largas (posiblemente nombre)
+  const caps = T.match(/([A-ZÁÉÍÓÚÑ]{3,}\s[A-ZÁÉÍÓÚÑ]{3,})/);
+  if (caps) return caps[0].trim();
+  
+  return '';
+}
+
+function guessDateFromText(text) {
+  if (!text) return null;
+  
+  // Patrones de fecha comunes
+  const datePatterns = [
+    /(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/g, // DD/MM/YYYY
+    /(\d{2,4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/g, // YYYY/MM/DD
+    /(\d{1,2})\s+de\s+([a-z]+)\s+de\s+(\d{2,4})/gi, // 10 de enero de 2023
+  ];
+  
+  for (const pattern of datePatterns) {
+    const matches = text.match(pattern);
+    if (matches && matches.length > 0) {
+      // Devolver la primera fecha encontrada
+      return matches[0];
+    }
+  }
+  
+  return null;
+}
+
+/* =========================
+   ASIGNACIÓN AUTOMÁTICA MEJORADA
+   ========================= */
+function autoAssign(ocr){
+  if(!ocr || (!ocr.amount && !ocr.name)){
+    showNotification("No hay datos suficientes del OCR. Sube una imagen clara y espera a que termine el procesamiento.", "error");
+    return;
+  }
+
+  // 1) Si nombre detectado => buscar persona y cuota pendiente
+  if(ocr.name){
+    const personIdx = state.integrantes.findIndex(p => 
+      p.nombre.toUpperCase().includes(ocr.name.toUpperCase()) || 
+      ocr.name.toUpperCase().includes(p.nombre.toUpperCase())
+    );
+    
+    if(personIdx !== -1){
+      // Si detectó monto, buscar cuota pendiente con monto parecido
+      if(ocr.amount){
+        const cuotaIdx = findMatchingQuotaIndex(personIdx, ocr.amount);
+        if(cuotaIdx !== -1){
+          markPago(personIdx, cuotaIdx, ocr.amount, ocr.text, ocr.date);
+          showNotification(`Pago asignado automáticamente a ${state.integrantes[personIdx].nombre} - Cuota ${cuotaIdx+1}`, "success");
+          renderAll(); 
+          return;
+        }
+      }
+      
+      // Si no pudo por monto: abrir modal para elegir cuota de esa persona
+      openAssignModal({personIndex: personIdx, guessedAmount: ocr.amount, ocrText: ocr.text, detectedDate: ocr.date});
+      return;
+    }
+  }
+
+  // 2) Si no hay nombre pero sí monto: buscar coincidencias entre todos los integrantes
+  if(ocr.amount){
+    // Buscar todas las (person,cuota) pendientes cuyo valor esté dentro de tolerancia
+    const candidates = [];
+    for(let i=0; i<state.integrantes.length; i++){
+      if (!state.integrantes[i].activo) continue; // Saltar integrantes inactivos
+      
+      for(let j=0; j<8; j++){
+        if(!state.pagos[i][j]) {
+          const cuotaVal = state.integrantes[i].cuotas[j];
+          // Tolerancia del 2% o 5 unidades (lo que sea mayor)
+          const tolerance = Math.max(cuotaVal * 0.02, 5);
+          if(Math.abs(cuotaVal - ocr.amount) <= tolerance){
+            candidates.push({personIndex:i, cuotaIndex:j, valor:cuotaVal});
+          }
+        }
+      }
+    }
+    
+    if(candidates.length === 1){
+      const c = candidates[0];
+      markPago(c.personIndex, c.cuotaIndex, ocr.amount, ocr.text, ocr.date);
+      showNotification(`Pago asignado automáticamente a ${state.integrantes[c.personIndex].nombre} - Cuota ${c.cuotaIndex+1}`, "success");
+      renderAll(); 
+      return;
+    } else if(candidates.length > 1){
+      // Si hay varias coincidencias, abrir modal con opciones
+      openAssignModal({candidates, guessedAmount: ocr.amount, ocrText: ocr.text, detectedDate: ocr.date});
+      return;
+    } else {
+      // No hay coincidencias - guardar en pendientes
+      const pend = { 
+        id: Date.now(), 
+        amount: ocr.amount, 
+        text: ocr.text, 
+        date: new Date().toLocaleString(),
+        detectedDate: ocr.date
+      };
+      state.pendientes.push(pend);
+      renderAll();
+      showNotification("No se encontró coincidencia. El pago se guardó en pendientes.", "info");
+      return;
+    }
+  }
+
+  // Si llegó hasta aquí, no se pudo asignar
+  showNotification("No se pudo asignar automáticamente. Usa la opción manual.", "error");
+}
+
+/* findMatchingQuotaIndex(personIdx, amount) -> returns index or -1 */
+function findMatchingQuotaIndex(personIdx, amount){
+  const cuotas = state.integrantes[personIdx].cuotas;
+  for(let j=0; j<cuotas.length; j++){
+    if(!state.pagos[personIdx][j]){
+      // Tolerancia del 2% o 5 unidades (lo que sea mayor)
+      const tolerance = Math.max(cuotas[j] * 0.02, 5);
+      if(Math.abs(cuotas[j] - amount) <= tolerance) return j;
+    }
+  }
+  return -1;
+}
+
+/* marcar pago */
+function markPago(personIndex, cuotaIndex, amount, note, detectedDate){
+  state.pagos[personIndex][cuotaIndex] = { 
+    amount: amount, 
+    date: detectedDate || new Date().toLocaleString(), 
+    note: note || '',
+    assignedBy: currentUser.name,
+    assignedAt: new Date().toLocaleString()
+  };
+  
+  // Agregar al historial
+  state.historial.unshift({
+    action: 'Pago registrado',
+    details: `${state.integrantes[personIndex].nombre} - Cuota ${cuotaIndex+1}`,
+    amount: amount,
+    date: new Date().toLocaleString(),
+    user: currentUser.name
+  });
+  
+  // Limitar historial a 50 entradas
+  if (state.historial.length > 50) state.historial.pop();
+  
+  saveState();
+}
+
+/* =========================
+   Modal de asignación MEJORADO
+   ========================= */
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modalBody');
+const modalCancel = document.getElementById('modalCancel');
+const modalSave = document.getElementById('modalSave');
+let modalContext = {};
+
+function openAssignModal(context){
+  if (!currentUser.isAdmin) {
+    showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+    return;
+  }
+  
+  modalContext = context || {};
+  modalBody.innerHTML = '';
+
+  if(context.pendingIndex != null){
+    const p = state.pendientes[context.pendingIndex];
+    modalBody.innerHTML += `
+      <div style="background:#f0f7ff;padding:0.625rem;border-radius:0.3125rem;margin-bottom:1rem;">
+        <div><strong>Pendiente:</strong> ${p.amount ? `S/ ${p.amount.toFixed(2)}` : 'Monto no detectado'}</div>
+        <div class="small">Fecha: ${p.date}</div>
+        ${p.detectedDate ? `<div class="small">Fecha detectada: ${p.detectedDate}</div>` : ''}
+        <div class="small">Texto detectado: ${p.text ? p.text.substring(0,200) : ''}</div>
+      </div>
+      <hr>`;
+  }
+  
+  if(context.candidates && context.candidates.length){
+    modalBody.innerHTML += `<div style="margin-bottom:0.625rem;">Se encontraron ${context.candidates.length} coincidencias. Elige una:</div>`;
+    context.candidates.forEach((c, idx) => {
+      const btn = document.createElement('div');
+      btn.style.padding='0.625rem'; 
+      btn.style.border='1px solid var(--border)'; 
+      btn.style.borderRadius='0.375rem'; 
+      btn.style.marginTop='0.5rem';
+      btn.style.cursor = 'pointer';
+      btn.style.transition = 'all 0.2s';
+      btn.innerHTML = `
+        <div><strong>${state.integrantes[c.personIndex].nombre}</strong></div>
+        <div class="small">Cuota ${c.cuotaIndex+1} - S/ ${c.valor.toFixed(2)}</div>
+        <button data-idx="${idx}" style="float:right" class="btn success">Seleccionar</button>`;
+      
+      btn.addEventListener('mouseenter', () => {
+        btn.style.backgroundColor = '#f5f5f5';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.backgroundColor = '';
+      });
+      
+      modalBody.appendChild(btn);
+      btn.querySelector('button').addEventListener('click', () => {
+        modalContext.selected = c;
+        modalSave.click();
+      });
+    });
+  } else {
+    // Mostrar selector general
+    modalBody.innerHTML += `
+      <div style="margin-bottom:0.625rem;">
+        Elige persona y cuota para asignar
+        ${context.guessedAmount ? `<br><small>Monto sugerido: S/ ${context.guessedAmount.toFixed(2)}</small>` : ''}
+        ${context.detectedDate ? `<br><small>Fecha detectada: ${context.detectedDate}</small>` : ''}
+      </div>`;
+    
+    const sel = document.createElement('select'); 
+    sel.style.width='100%'; 
+    sel.style.padding='0.5rem'; 
+    sel.style.marginBottom='1rem';
+    sel.style.border='1px solid var(--border)'; 
+    sel.style.borderRadius='0.3125rem';
+    
+    const placeholder = document.createElement('option'); 
+    placeholder.value=''; 
+    placeholder.textContent='-- Seleccionar persona --'; 
+    sel.appendChild(placeholder);
+    
+    state.integrantes.forEach((p, i)=>{
+      if (!p.activo) return; // Saltar integrantes inactivos
+      
+      const opt = document.createElement('option'); 
+      opt.value = i; 
+      opt.textContent = p.nombre; 
+      sel.appendChild(opt);
+    });
+    
+    modalBody.appendChild(sel);
+    const cuotasDiv = document.createElement('div'); 
+    cuotasDiv.style.marginTop='0.625rem'; 
+    modalBody.appendChild(cuotasDiv);
+    
+    sel.addEventListener('change', ()=>{
+      cuotasDiv.innerHTML = '';
+      const pi = parseInt(sel.value);
+      if(isNaN(pi)) return;
+      
+      state.integrantes[pi].cuotas.forEach((val, qi)=>{
+        const paid = state.pagos[pi][qi];
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.padding = '0.3125rem 0';
+        label.style.cursor = paid ? 'not-allowed' : 'pointer';
+        
+        label.innerHTML = `
+          <input type="radio" name="cuotaSel" value="${pi}_${qi}" ${paid ? 'disabled' : ''} style="margin-right:0.5rem;"/>
+          <div>
+            <div>Cuota ${qi+1} - S/ ${val.toFixed(2)}</div>
+            <div class="small" style="color:${paid ? 'var(--success)' : 'var(--muted)'}">
+              ${paid ? 'Pagada el ' + (state.pagos[pi][qi].date || 'fecha desconocida') : 'Pendiente'}
+            </div>
+          </div>`;
+        
+        cuotasDiv.appendChild(label);
+      });
+    });
+    
+    modalContext.selElement = sel;
+  }
+
+  modal.style.display = 'flex';
+}
+
+modalCancel.addEventListener('click', ()=>{ 
+  modal.style.display='none'; 
+  modalContext = {}; 
+});
+
+modalSave.addEventListener('click', ()=>{
+  // Si context.selected viene de candidates
+  if(modalContext.selected){
+    const c = modalContext.selected;
+    markPago(c.personIndex, c.cuotaIndex, modalContext.guessedAmount || c.valor, modalContext.ocrText || '', modalContext.detectedDate);
+    modal.style.display='none'; 
+    modalContext = {}; 
+    renderAll(); 
+    
+    // Si era un pendiente, eliminarlo
+    if (modalContext.pendingIndex != null) {
+      state.pendientes.splice(modalContext.pendingIndex, 1);
+    }
+    
+    showNotification("Pago asignado correctamente", "success");
+    return;
+  }
+  
+  // Si se eligió persona/cuota desde select
+  if(modalContext.selElement){
+    const sel = modalContext.selElement;
+    const val = sel.value;
+    if(!val){ 
+      showNotification("Selecciona una persona", "error");
+      return; 
+    }
+    
+    const radio = document.querySelector('input[name="cuotaSel"]:checked');
+    if(!radio){ 
+      showNotification("Selecciona una cuota", "error");
+      return; 
+    }
+    
+    const [pi, qi] = radio.value.split('_').map(Number);
+    const amount = modalContext.guessedAmount || state.integrantes[pi].cuotas[qi];
+    markPago(pi, qi, amount, modalContext.ocrText || '', modalContext.detectedDate);
+    modal.style.display='none'; 
+    modalContext = {}; 
+    renderAll(); 
+    
+    // Si era un pendiente, eliminarlo
+    if (modalContext.pendingIndex != null) {
+      state.pendientes.splice(modalContext.pendingIndex, 1);
+    }
+    
+    showNotification("Pago asignado correctamente", "success");
+    return;
+  }
+  
+  showNotification("No se ha seleccionado ninguna opción", "error");
+});
+
+/* =========================
+   Configuración y gestión de integrantes
+   ========================= */
+const settingsModal = document.getElementById('settingsModal');
+const settingsContent = document.getElementById('settingsContent');
+const settingsCancel = document.getElementById('settingsCancel');
+const settingsSave = document.getElementById('settingsSave');
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  if (!currentUser.isAdmin) {
+    showNotification("Modo solo lectura - Inicia sesión como administrador para editar", "error");
+    return;
+  }
+  openSettingsModal();
+});
+
+function openSettingsModal() {
+  settingsContent.innerHTML = `
+    <div id="membersTab" class="tab-content active">
+      <h4>Gestión de Integrantes</h4>
+      <div id="membersManagement" style="max-height:300px;overflow-y:auto;margin-top:0.625rem;">
+        ${state.integrantes.map((m, i) => `
+          <div style="display:flex;align-items:center;gap:0.625rem;padding:0.5rem;border-bottom:1px solid #f0f0f0;">
+            <input type="text" value="${m.nombre}" data-index="${i}" style="flex:1;padding:0.3125rem;" class="member-name-input">
+            <input type="checkbox" ${m.activo ? 'checked' : ''} data-index="${i}" class="member-active-checkbox" title="Integrante activo">
+            <button class="btn danger" onclick="removeMember(${i})" style="padding:0.3125rem 0.625rem;"><i class="fas fa-trash"></i></button>
+          </div>
+        `).join('')}
+      </div>
+      <button id="addMemberBtn" class="btn success" style="margin-top:0.625rem;"><i class="fas fa-plus"></i> Agregar Integrante</button>
+      
+      <h4 style="margin-top:1.25rem;">Cuotas por Defecto</h4>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.625rem;">
+        ${Array.from({length: 8}, (_, i) => `
+          <div>
+            <label class="small">Cuota ${i+1}</label>
+            <input type="number" step="0.01" value="${integrantesBase[0]?.cuotas[i] || 0}" id="defaultQuota${i}" style="width:100%;padding:0.3125rem;">
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    
+    <div id="systemTab" class="tab-content">
+      <h4>Configuración del Sistema</h4>
+      <div style="margin-top:0.625rem;">
+        <button id="restoreBackupBtn" class="btn warning" style="margin-bottom:0.625rem;"><i class="fas fa-history"></i> Restaurar desde Respaldo</button>
+        <div class="small">Esta acción reemplazará todos los datos actuales por los del respaldo más reciente.</div>
+      </div>
+      
+      <h4 style="margin-top:1.25rem;">Historial de Cambios</h4>
+      <div style="max-height:200px;overflow-y:auto;margin-top:0.625rem;">
+        ${state.historial.length > 0 ? 
+          state.historial.map(item => `
+            <div style="padding:0.5rem;border-bottom:1px solid #f0f0f0;font-size:0.75rem;">
+              <div><strong>${item.action}</strong> - ${item.details}</div>
+              <div>Monto: S/ ${item.amount || 'N/A'} - ${item.date} - Por: ${item.user}</div>
+            </div>
+          `).join('') : 
+          '<div class="small" style="text-align:center;padding:1rem;">No hay historial de cambios</div>'
+        }
+      </div>
+      
+      <div style="margin-top:1.25rem;">
+        <h5>Información del Sistema</h5>
+        <div class="small">Versión: 3.0</div>
+        <div class="small">Integrantes: ${state.integrantes.length}</div>
+        <div class="small">Pagos registrados: ${state.pagos.flat().filter(p => p).length}</div>
+        <div class="small">Pendientes: ${state.pendientes.length}</div>
+      </div>
+    </div>
+    
+    <div id="securityTab" class="tab-content">
+      <h4>Configuración de Seguridad</h4>
+      <div class="input-group" style="margin-top:1rem;">
+        <label for="changeUser">Nuevo Usuario</label>
+        <input id="changeUser" placeholder="Nuevo usuario" value="${ADMIN_USER}" />
+      </div>
+      <div class="input-group">
+        <label for="changePass">Nueva Contraseña</label>
+        <input id="changePass" placeholder="Nueva contraseña" type="password" />
+      </div>
+      <div class="input-group">
+        <label for="confirmPass">Confirmar Contraseña</label>
+        <input id="confirmPass" placeholder="Confirmar contraseña" type="password" />
+      </div>
+      <button id="changeCredentials" class="btn warning" style="margin-top:0.625rem;"><i class="fas fa-key"></i> Cambiar Credenciales</button>
+      <div class="small" style="margin-top:0.625rem;">Nota: Estos cambios solo afectarán a esta sesión. Para hacerlos permanentes, debes actualizar el código.</div>
+    </div>
+  `;
+  
+  // Configurar pestañas
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      const tabName = this.getAttribute('data-tab');
+      document.getElementById(`${tabName}Tab`).classList.add('active');
+    });
+  });
+  
+  // Configurar botón para agregar integrante
+  document.getElementById('addMemberBtn').addEventListener('click', () => {
+    const newIndex = state.integrantes.length;
+    state.integrantes.push({ nombre: 'NUEVO INTEGRANTE', cuotas: Array(8).fill(0), activo: true });
+    state.pagos.push(Array(8).fill(false));
+    
+    const membersManagement = document.getElementById('membersManagement');
+    const newMemberDiv = document.createElement('div');
+    newMemberDiv.style.display = 'flex';
+    newMemberDiv.style.alignItems = 'center';
+    newMemberDiv.style.gap = '0.625rem';
+    newMemberDiv.style.padding = '0.5rem';
+    newMemberDiv.style.borderBottom = '1px solid #f0f0f0';
+    newMemberDiv.innerHTML = `
+      <input type="text" value="NUEVO INTEGRANTE" data-index="${newIndex}" style="flex:1;padding:0.3125rem;" class="member-name-input">
+      <input type="checkbox" checked data-index="${newIndex}" class="member-active-checkbox" title="Integrante activo">
+      <button class="btn danger" onclick="removeMember(${newIndex})" style="padding:0.3125rem 0.625rem;"><i class="fas fa-trash"></i></button>
+    `;
+    membersManagement.appendChild(newMemberDiv);
+    
+    // Actualizar eventos de los inputs
+    attachMemberNameEvents();
+    attachMemberActiveEvents();
+  });
+  
+  // Configurar botón de restauración
+  document.getElementById('restoreBackupBtn').addEventListener('click', () => {
+    if (confirm('¿Estás seguro de que quieres restaurar desde el respaldo más reciente? Se perderán todos los cambios no respaldados.')) {
+      restoreFromBackup();
+      settingsModal.style.display = 'none';
+    }
+  });
+  
+  // Configurar cambio de credenciales
+  document.getElementById('changeCredentials').addEventListener('click', () => {
+    const newUser = document.getElementById('changeUser').value;
+    const newPass = document.getElementById('changePass').value;
+    const confirmPass = document.getElementById('confirmPass').value;
+    
+    if (!newUser || !newPass) {
+      showNotification("Usuario y contraseña no pueden estar vacíos", "error");
+      return;
+    }
+    
+    if (newPass !== confirmPass) {
+      showNotification("Las contraseñas no coinciden", "error");
+      return;
+    }
+    
+    // En una aplicación real, aquí se guardarían las nuevas credenciales
+    showNotification("Credenciales cambiadas (solo para esta sesión). Para hacerlo permanente, actualiza el código.", "info");
+  });
+  
+  // Adjuntar eventos a los inputs de nombres
+  attachMemberNameEvents();
+  attachMemberActiveEvents();
+  
+  settingsModal.style.display = 'flex';
+}
+
+function attachMemberNameEvents() {
+  document.querySelectorAll('.member-name-input').forEach(input => {
+    input.addEventListener('change', function() {
+      const index = parseInt(this.getAttribute('data-index'));
+      state.integrantes[index].nombre = this.value;
+    });
+  });
+}
+
+function attachMemberActiveEvents() {
+  document.querySelectorAll('.member-active-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const index = parseInt(this.getAttribute('data-index'));
+      state.integrantes[index].activo = this.checked;
+    });
+  });
+}
+
+function removeMember(index) {
+  if (confirm(`¿Estás seguro de que quieres eliminar a ${state.integrantes[index].nombre}?`)) {
+    state.integrantes.splice(index, 1);
+    state.pagos.splice(index, 1);
+    openSettingsModal(); // Recargar la modal
+    renderAll();
+    showNotification("Integrante eliminado", "info");
+  }
+}
+
+settingsCancel.addEventListener('click', () => {
+  settingsModal.style.display = 'none';
+});
+
+settingsSave.addEventListener('click', () => {
+  // Guardar cuotas por defecto
+  for (let i = 0; i < 8; i++) {
+    const value = parseFloat(document.getElementById(`defaultQuota${i}`).value);
+    if (!isNaN(value)) {
+      integrantesBase[0].cuotas[i] = value;
+    }
+  }
+  
+  saveState();
+  settingsModal.style.display = 'none';
+  showNotification("Configuración guardada correctamente", "success");
+});
+
+/* =========================
+   Botones export / limpiar / respaldo
+   ========================= */
+document.getElementById('exportBtn').addEventListener('click', ()=> {
+  const rows = [['Nombre','Cuota1','Monto1','Pagado1','Fecha1','Cuota2','Monto2','Pagado2','Fecha2','Cuota3','Monto3','Pagado3','Fecha3','Cuota4','Monto4','Pagado4','Fecha4','Cuota5','Monto5','Pagado5','Fecha5','Cuota6','Monto6','Pagado6','Fecha6','Cuota7','Monto7','Pagado7','Fecha7','Cuota8','Monto8','Pagado8','Fecha8']];
+  
+  state.integrantes.forEach((p,i)=>{
+    const row = [p.nombre];
+    for(let j=0;j<8;j++){
+      row.push(`Cuota ${j+1}`);
+      row.push(p.cuotas[j]);
+      const pay = state.pagos[i][j];
+      row.push(pay ? 'Sí' : 'No');
+      row.push(pay ? (pay.date || '') : '');
+    }
+    rows.push(row);
+  });
+  
+  downloadCSV('pagos_detallados.csv', rows);
+});
+
+document.getElementById('backupBtn').addEventListener('click', ()=>{
+  createBackup();
+});
+
+document.getElementById('clearBtn').addEventListener('click', ()=>{
+  if(!confirm('¿Estás seguro de que quieres borrar TODOS los pagos? Esta acción no se puede deshacer.')) return;
+  if(!confirm('¿Realmente estás seguro? Se perderán todos los registros de pagos.')) return;
+  
+  state = createInitialState();
+  renderAll();
+  showNotification("Todos los pagos han sido eliminados", "info");
+});
+
+/* =========================
+   Búsqueda y filtros
+   ========================= */
+document.getElementById('searchInput').addEventListener('input', function() {
+  searchFilter = this.value;
+  renderMembers();
+});
+
+// Filtros
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentFilter = this.getAttribute('data-filter');
+    renderMembers();
+  });
+});
+
+// Toggle de vista
+document.getElementById('viewToggle').addEventListener('click', function() {
+  currentView = currentView === 'list' ? 'calendar' : 'list';
+  this.innerHTML = currentView === 'list' ? '<i class="fas fa-list"></i> Vista lista' : '<i class="fas fa-calendar"></i> Vista calendario';
+  
+  if (currentView === 'calendar') {
+    document.querySelector('.grid').style.gridTemplateColumns = '1fr';
+    document.getElementById('membersList').style.display = 'none';
+    document.getElementById('calendarView').style.display = 'grid';
+  } else {
+    document.querySelector('.grid').style.gridTemplateColumns = '1fr 380px';
+    document.getElementById('membersList').style.display = 'block';
+    document.getElementById('calendarView').style.display = 'none';
+  }
+});
+
+/* =========================
+   Inicialización
+   ========================= */
+updateLastSaveDisplay();
+
+// Si hay datos guardados, ofrecer modo demo automáticamente
+if (loadState()) {
+  document.getElementById('loginError').innerHTML = 
+    'Hay datos guardados. Puedes entrar como administrador o <a href="#" id="autoDemo" style="color:var(--primary);">ver en modo demo</a>.';
+  document.getElementById('autoDemo').addEventListener('click', (e) => {
+    e.preventDefault();
+    loginSuccess('demo', false);
+  });
+}
+
+// Inicializar vista calendario como oculta
+document.getElementById('calendarView').style.display = 'none';
+</script>
+</body>
+</html>
