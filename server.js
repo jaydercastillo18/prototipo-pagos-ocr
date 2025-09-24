@@ -1,53 +1,33 @@
-// server.js
-// ===============================
-// Backend con Express + Tesseract OCR
-// ===============================
-
-// 1. Importamos dependencias
 const express = require("express");
-const multer = require("multer");       // Para recibir imágenes
-const cors = require("cors");           // Para permitir conexión desde tu frontend
-const Tesseract = require("tesseract.js"); // OCR
+const multer = require("multer");
+const Tesseract = require("tesseract.js");
+const cors = require("cors");
+const path = require("path");
 
-// 2. Inicializamos servidor
 const app = express();
-const PORT = process.env.PORT || 3000;
+const upload = multer({ dest: "uploads/" });
 
-// 3. Middleware
-app.use(cors()); // permite que tu index.html en otro dominio se conecte
+app.use(cors());
 app.use(express.json());
 
-// 4. Configuración de multer para subir imágenes en memoria
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+// 👉 Servir archivos estáticos (index.html, css, js, etc.)
+app.use(express.static(path.join(__dirname)));
 
-// 5. Endpoint de prueba
+// 👉 Ruta principal: devolver el index.html
 app.get("/", (req, res) => {
-  res.send("Servidor OCR funcionando 🚀");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// 6. Endpoint para subir imágenes y aplicar OCR
+// 👉 Endpoint OCR
 app.post("/upload", upload.single("image"), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: "No se envió ninguna imagen" });
-    }
-
-    // Ejecutamos OCR con tesseract.js
-    const result = await Tesseract.recognize(req.file.buffer, "spa+eng", {
-      logger: (m) => console.log(m), // log de progreso
-    });
-
-    res.json({
-      text: result.data.text, // texto detectado
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error al procesar la imagen" });
+    const result = await Tesseract.recognize(req.file.path, "spa");
+    res.json({ text: result.data.text });
+  } catch (err) {
+    res.status(500).json({ error: "Error procesando la imagen" });
   }
 });
 
-// 7. Arrancar servidor
-app.listen(PORT, () => {
-  console.log(`✅ Servidor corriendo en puerto ${PORT}`);
-});
+// 👉 Render usa este puerto
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
