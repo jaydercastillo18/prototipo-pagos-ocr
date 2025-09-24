@@ -13,7 +13,7 @@ app.use(express.json());
 // 👉 Servir archivos estáticos (index.html, css, js, etc.)
 app.use(express.static(path.join(__dirname)));
 
-// 👉 Ruta principal: devolver el index.html
+// 👉 Cuando entren a "/" devolver index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
@@ -28,6 +28,5 @@ app.post("/upload", upload.single("image"), async (req, res) => {
   }
 });
 
-// 👉 Render usa este puerto
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor en puerto ${PORT}`));
